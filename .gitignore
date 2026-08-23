@@ -1,0 +1,10 @@
+.DS_Store
+*.log
+node_modules/
+.env
+.env.local
+
+# Local secrets — never commit
+js/config.local.js
+.env
+.env.*
