@@ -1,0 +1,165 @@
+/* ==========================================================================
+   Cashora — Design Tokens
+   Single source of truth for color, type, spacing, radius, shadow, motion.
+   Never hardcode these values elsewhere — always reference the variable.
+   ========================================================================== */
+
+:root {
+
+  /* ---------- Color: Surface ---------- */
+  --color-bg-base:        #05070d;   /* page background */
+  --color-bg-surface:     #0d1220;   /* cards, panels */
+  --color-bg-surface-alt: #10162a;   /* nested cards, table rows */
+  --color-bg-hover:       #131a2e;   /* hover state on surfaces */
+  --color-border:         rgba(255, 255, 255, 0.08);
+  --color-border-strong:  rgba(255, 255, 255, 0.14);
+
+  /* ---------- Color: Text ---------- */
+  --color-text-primary:   #F5F7FA;
+  --color-text-secondary: #94A3B8;
+  --color-text-muted:     #5B6478;
+
+  /* ---------- Color: Brand / Accent ---------- */
+  --color-accent-400:     #60A5FA;
+  --color-accent-500:     #3B82F6;
+  --color-accent-600:     #2563EB;
+  --gradient-accent:      linear-gradient(135deg, var(--color-accent-400), var(--color-accent-600));
+
+  /* ---------- Color: Semantic (finance) ---------- */
+  --color-success:        #22C55E;   /* income / positive */
+  --color-success-bg:     rgba(34, 197, 94, 0.12);
+  --color-danger:         #EF4444;   /* expense / negative */
+  --color-danger-bg:      rgba(239, 68, 68, 0.12);
+  --color-warning:        #F59E0B;   /* budget nearing limit */
+  --color-warning-bg:     rgba(245, 158, 11, 0.12);
+
+  /* ---------- Typography ---------- */
+  --font-display: 'Space Grotesk', 'Inter', sans-serif;
+  --font-body:    'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace; /* for amounts/data if needed */
+
+  --text-xs:   0.75rem;   /* 12px - captions, labels */
+  --text-sm:   0.875rem;  /* 14px - secondary text */
+  --text-base: 1rem;      /* 16px - body */
+  --text-lg:   1.125rem;  /* 18px - emphasized body */
+  --text-xl:   1.375rem;  /* 22px - card titles */
+  --text-2xl:  1.75rem;   /* 28px - section headings */
+  --text-3xl:  2.25rem;   /* 36px - page headings */
+  --text-4xl:  3rem;      /* 48px - hero numbers */
+
+  --font-weight-regular:  400;
+  --font-weight-medium:   500;
+  --font-weight-semibold: 600;
+  --font-weight-bold:     700;
+
+  --line-height-tight:  1.2;
+  --line-height-normal: 1.5;
+
+  /* ---------- Spacing scale (4px base unit) ---------- */
+  --space-1:  0.25rem;  /* 4px */
+  --space-2:  0.5rem;   /* 8px */
+  --space-3:  0.75rem;  /* 12px */
+  --space-4:  1rem;     /* 16px */
+  --space-5:  1.25rem;  /* 20px */
+  --space-6:  1.5rem;   /* 24px */
+  --space-8:  2rem;     /* 32px */
+  --space-10: 2.5rem;   /* 40px */
+  --space-12: 3rem;     /* 48px */
+  --space-16: 4rem;     /* 64px */
+
+  /* ---------- Radius ---------- */
+  --radius-sm:  6px;    /* small buttons, tags */
+  --radius-md:  10px;   /* inputs, badges */
+  --radius-lg:  16px;   /* cards */
+  --radius-xl:  24px;   /* modals, hero panels */
+  --radius-full: 999px; /* pills */
+
+  /* ---------- Shadow ---------- */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.35);
+  --shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.45);
+  --shadow-glow-accent: 0 0 24px rgba(59, 130, 246, 0.25);
+
+  /* ---------- Motion ---------- */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast:   150ms;
+  --duration-normal: 250ms;
+  --duration-slow:   400ms;
+
+  /* ---------- Layout ---------- */
+  --sidebar-width: 260px;
+  --header-height: 72px;
+  --container-max: 1440px;
+
+  /* ---------- Breakpoints (reference only — used in media queries) ---------- */
+  /* mobile: 0-479 | sm: 480 | md: 768 | lg: 1024 | xl: 1440 */
+}
+
+/* Respect reduced motion preference */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+
+/* ---------- Light theme ---------- */
+[data-theme="light"] {
+  --color-bg-base:        #f4f6fb;
+  --color-bg-surface:     #ffffff;
+  --color-bg-surface-alt: #eef2f8;
+  --color-bg-hover:       #e8edf6;
+  --color-border:         rgba(15, 23, 42, 0.08);
+  --color-border-strong:  rgba(15, 23, 42, 0.14);
+
+  --color-text-primary:   #0f172a;
+  --color-text-secondary: #475569;
+  --color-text-muted:     #64748b;
+
+  --color-accent-400:     #2563eb;
+  --color-accent-500:     #1d4ed8;
+  --color-accent-600:     #1e40af;
+
+  --shadow-sm: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-md: 0 4px 16px rgba(15, 23, 42, 0.08);
+  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.12);
+  --shadow-glow-accent: 0 0 24px rgba(37, 99, 235, 0.18);
+}
+
+[data-theme="light"] body {
+  background: var(--color-bg-base);
+  color: var(--color-text-primary);
+}
+
+[data-theme="light"] .topbar {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+[data-theme="light"] .sidebar {
+  background: var(--color-bg-surface);
+}
+
+[data-theme="light"] .stat-card__value--accent,
+[data-theme="light"] .page-section__title {
+  /* gradient text still works */
+}
+
+[data-theme="light"] .btn-primary {
+  color: #fff;
+}
+
+[data-theme="light"] .modal {
+  background: #fff;
+}
+
+[data-theme="light"] .notif-panel {
+  background: #fff;
+}
+
+[data-theme="light"] .disclaimer-marquee {
+  background: rgba(37, 99, 235, 0.08);
+  color: #1e40af;
+  border-color: rgba(37, 99, 235, 0.15);
+}
