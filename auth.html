@@ -1,0 +1,517 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<!-- Google Search Console — Option B (HTML tag). Replace CONTENT with the code from Search Console. -->
+<meta name="google-site-verification" content="jDSLpLixrt2HtUDu_5Ao-N-vICyit6tMCqablT30GE0">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sign in | Cashora</title>
+<link rel="icon" type="image/webp" href="assets/icons/cashora-icon.webp">
+<link rel="icon" type="image/webp" sizes="32x32" href="assets/icons/favicon-32.webp">
+<link rel="apple-touch-icon" href="assets/icons/apple-touch-icon.webp">
+
+<meta name="theme-color" content="#05070d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/main.css">
+<style>
+  /* ==========================================================================
+     Sign-in page — two-pane sliding card. Colors/type/spacing/radius all come
+     from css/tokens.css custom properties so this stays in sync with the rest
+     of the app automatically if the palette ever changes.
+     ========================================================================== */
+  * { box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-4);
+    background:
+      radial-gradient(circle at 15% 15%, rgba(59,130,246,0.10), transparent 40%),
+      radial-gradient(circle at 85% 85%, rgba(59,130,246,0.06), transparent 40%),
+      var(--color-bg-base);
+    overflow-x: hidden;
+  }
+
+  /* ---------- Glow border (shown briefly while a real login/signup call is in flight) ---------- */
+  .snake-wrapper {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-xl);
+    pointer-events: none;
+    mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask: linear-gradient(#fff 0 0) padding-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: destination-out;
+    mask-composite: exclude;
+    z-index: 999;
+    padding: 3px;
+    display: none;
+  }
+  .snake-wrapper.active { display: block; }
+  .snake-wrapper::before {
+    content: "";
+    position: absolute;
+    width: 260px; height: 260px;
+    top: -60px; left: -60px;
+    background: conic-gradient(from 0deg, var(--color-accent-400), var(--color-accent-600), transparent 40%);
+    animation: snakeRotate 1.4s linear infinite;
+  }
+  @keyframes snakeRotate { 100% { transform: rotate(360deg); } }
+
+  /* ---------- Main card ---------- */
+  .main-card {
+    position: relative;
+    background: var(--color-bg-surface);
+    border: 1px solid var(--color-border);
+    width: 100%;
+    max-width: 900px;
+    min-height: 530px;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg), var(--shadow-glow-accent);
+    display: flex;
+    overflow: hidden;
+  }
+
+  .form-viewport { flex: 1.1; position: relative; overflow: hidden; z-index: 10; }
+  .panel-slider { display: flex; width: 200%; height: 100%; transition: transform 0.5s cubic-bezier(0.76,0,0.24,1); }
+  .form-pane { width: 50%; padding: var(--space-10) var(--space-8); display: flex; flex-direction: column; justify-content: center; }
+
+  .form-header { text-align: center; margin-bottom: var(--space-6); }
+  .form-header h2 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: var(--font-weight-bold); color: var(--color-text-primary); margin-bottom: 4px; }
+  .form-header p { font-size: var(--text-sm); color: var(--color-text-secondary); }
+
+  .input-pod { position: relative; width: 100%; margin-bottom: var(--space-4); }
+  .input-icon { position: absolute; left: 18px; top: 50%; transform: translateY(-50%); width: 18px; height: 18px; opacity: 0.55; pointer-events: none; transition: opacity 0.2s; }
+  .input-pod input {
+    width: 100%;
+    padding: 15px 46px 15px 50px;
+    background: var(--color-bg-surface-alt);
+    border: 1.5px solid transparent;
+    border-radius: var(--radius-full);
+    color: var(--color-text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    outline: none;
+    transition: all 0.25s var(--ease-standard);
+  }
+  .input-pod input::placeholder { color: var(--color-text-muted); }
+  .input-pod input:focus { border-color: var(--color-accent-500); background: var(--color-bg-hover); box-shadow: 0 0 0 4px rgba(59,130,246,0.12); }
+  .input-pod input:focus ~ .input-icon { opacity: 1; }
+
+  .eye-toggle {
+    position: absolute; right: 18px; top: 50%; transform: translateY(-50%);
+    cursor: pointer; opacity: 0.5; width: 18px; height: 18px; transition: opacity 0.2s;
+    background: none; border: none; padding: 0; display: flex; align-items: center; justify-content: center;
+  }
+  .eye-toggle svg { width: 100%; height: 100%; }
+  .eye-toggle:hover, .eye-toggle:focus-visible { opacity: 0.9; }
+  .eye-toggle:focus-visible { outline: 2px solid var(--color-accent-400); outline-offset: 2px; border-radius: 4px; }
+
+  /* Kinetic per-character particle effect while typing */
+  .smooth-ball, .smooth-jump {
+    position: absolute; font-size: var(--text-sm); font-weight: 700; pointer-events: none; z-index: 5;
+  }
+  .smooth-ball { color: var(--color-accent-400); transform: translateY(-35px); animation: ballDrop 0.25s cubic-bezier(0.25,1.35,0.5,1) forwards; }
+  .smooth-jump { color: var(--color-danger); animation: deleteJump 0.35s cubic-bezier(0.1,0.8,0.3,1) forwards; }
+  @keyframes ballDrop { 100% { transform: translateY(0); } }
+  @keyframes deleteJump {
+    0%   { transform: translateY(0) scale(1); opacity: 1; }
+    30%  { transform: translateY(-8px); }
+    100% { transform: translateY(35px) scale(0.6); opacity: 0; }
+  }
+
+  .meta-actions { display: flex; justify-content: flex-end; font-size: var(--text-xs); margin-bottom: var(--space-5); padding: 0 4px; }
+  .meta-actions button { color: var(--color-accent-400); background: none; border: none; cursor: pointer; font-size: inherit; font-family: inherit; }
+  .meta-actions button:hover { color: var(--color-accent-400); text-decoration: underline; }
+
+  .btn-submit {
+    width: 100%; padding: var(--space-4) 0; border: none; border-radius: var(--radius-full);
+    font-family: var(--font-body); font-size: var(--text-base); font-weight: var(--font-weight-semibold);
+    color: #05070d; background: var(--gradient-accent);
+    cursor: pointer; box-shadow: 0 10px 25px rgba(59,130,246,0.28);
+    transition: transform 0.15s, box-shadow 0.15s; letter-spacing: 0.01em;
+  }
+  .btn-submit:active { transform: scale(0.98); }
+  .btn-submit:disabled { opacity: 0.6; cursor: default; }
+
+  .footer-routing { width: 100%; text-align: center; margin-top: var(--space-6); font-size: var(--text-sm); color: var(--color-text-secondary); }
+  .footer-routing span { color: var(--color-accent-400); cursor: pointer; font-weight: var(--font-weight-semibold); }
+  .footer-routing span:hover { text-decoration: underline; }
+
+  .auth-inline-msg {
+    font-size: var(--text-sm); border-radius: var(--radius-md); padding: var(--space-3) var(--space-4);
+    margin-bottom: var(--space-4); display: none;
+  }
+  .auth-inline-msg.is-visible { display: block; }
+  .auth-inline-msg.is-error { background: var(--color-danger-bg); color: var(--color-danger); }
+  .auth-inline-msg.is-success { background: var(--color-success-bg); color: var(--color-success); }
+
+  /* ---------- Right splash panel ---------- */
+  .splash-pane {
+    flex: 0.9; position: relative; z-index: 5;
+    background: linear-gradient(150deg, var(--color-bg-surface-alt) 0%, #0a1024 55%, var(--color-accent-600) 220%);
+    display: flex; flex-direction: column; justify-content: center; align-items: center;
+    padding: var(--space-10); text-align: center; color: var(--color-text-primary);
+  }
+  .wave-cutout { position: absolute; top: 0; left: -2px; height: 100%; width: 70px; fill: var(--color-bg-surface); z-index: 2; pointer-events: none; }
+  .splash-content { position: relative; z-index: 10; max-width: 280px; }
+  .splash-content .splash-mark {
+    width: 56px; height: 56px; border-radius: var(--radius-md); margin: 0 auto var(--space-5);
+    display: flex; align-items: center; justify-content: center; overflow: hidden;
+    box-shadow: var(--shadow-md);
+  }
+  .splash-content .splash-mark img { width: 100%; height: 100%; object-fit: cover; }
+  .splash-content h3 { font-family: var(--font-display); font-size: var(--text-2xl); font-weight: var(--font-weight-bold); margin-bottom: var(--space-3); }
+  .splash-content p { font-size: var(--text-sm); line-height: var(--line-height-normal); color: var(--color-text-secondary); }
+
+  @media (max-width: 768px) {
+    .main-card { flex-direction: column; max-width: 420px; min-height: auto; }
+    .form-pane { padding: var(--space-8) var(--space-5); }
+    .splash-pane { padding: var(--space-8) var(--space-5); }
+    .wave-cutout { display: none; }
+  }
+
+  .auth-page-footer {
+    text-align: center; font-size: var(--text-xs); color: var(--color-text-muted); margin-top: var(--space-5);
+  }
+</style>
+</head>
+<body>
+
+<div class="main-card" id="cardContainer">
+  <div id="glowSnake" class="snake-wrapper"></div>
+
+  <div class="form-viewport">
+    <div class="panel-slider" id="panelSlider">
+
+      <!-- ============ LOGIN / RESET PANE ============ -->
+      <div class="form-pane">
+        <div class="form-header">
+          <h2 id="loginTitle">Welcome back</h2>
+          <p id="loginSubtitle">Sign in to see your financial overview.</p>
+        </div>
+
+        <div class="auth-inline-msg" id="loginMsg"></div>
+
+        <form id="loginForm" style="width:100%;" autocomplete="on">
+          <div class="input-pod">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <input type="email" id="loginEmail" placeholder="E-mail" aria-label="Email address" autocomplete="email" required>
+          </div>
+
+          <div class="input-pod" id="loginPassPod">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" id="loginPass" placeholder="Password" aria-label="Password" autocomplete="current-password">
+            <button type="button" class="eye-toggle" data-target="loginPass" aria-label="Show password" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+                <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                <line class="eye-close" x1="1" y1="1" x2="23" y2="23" style="display:none"></line>
+              </svg>
+            </button>
+          </div>
+
+          <div class="meta-actions">
+            <button type="button" id="forgotBtn">Forgot password?</button>
+          </div>
+
+          <button type="submit" class="btn-submit" id="loginSubmitBtn">SIGN IN</button>
+        </form>
+
+        <div class="footer-routing">
+          Don't have an account?
+          <span id="goToSignup">Create</span>
+        </div>
+      </div>
+
+      <!-- ============ SIGNUP PANE ============ -->
+      <div class="form-pane">
+        <div class="form-header">
+          <h2>Welcome!</h2>
+          <p>Create a new account</p>
+        </div>
+
+        <div class="auth-inline-msg" id="signupMsg"></div>
+
+        <form id="signupForm" style="width:100%;" autocomplete="on">
+          <div class="input-pod">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+              <circle cx="12" cy="7" r="4"></circle>
+            </svg>
+            <input type="text" id="regName" placeholder="Full Name" aria-label="Full name" autocomplete="name" required>
+          </div>
+
+          <div class="input-pod">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+              <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
+              <polyline points="22,6 12,13 2,6"></polyline>
+            </svg>
+            <input type="email" id="regEmail" placeholder="E-mail" aria-label="Email address" autocomplete="email" required>
+          </div>
+
+          <div class="input-pod">
+            <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+              <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+              <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+            </svg>
+            <input type="password" id="regPass" placeholder="Password (min 8 characters)" aria-label="Password, minimum 8 characters" autocomplete="new-password" required>
+            <button type="button" class="eye-toggle" data-target="regPass" aria-label="Show password" aria-pressed="false">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color:var(--color-accent-400)">
+                <path class="eye-open" d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                <circle class="eye-open" cx="12" cy="12" r="3"></circle>
+                <line class="eye-close" x1="1" y1="1" x2="23" y2="23" style="display:none"></line>
+              </svg>
+            </button>
+          </div>
+
+          <button type="submit" class="btn-submit" id="signupSubmitBtn" style="margin-top:var(--space-2);">SIGN UP</button>
+        </form>
+
+        <div class="footer-routing">
+          Already have an account?
+          <span id="goToLogin">Sign In</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="splash-pane">
+    <svg class="wave-cutout" viewBox="0 0 100 100" preserveAspectRatio="none">
+      <path d="M100,0 C30,15 40,50 0,70 C0,70 0,100 0,100 L100,100 Z"></path>
+    </svg>
+    <div class="splash-content">
+      <div class="splash-mark"><img src="assets/icons/cashora-icon.webp" width="56" height="56" alt="" /></div>
+      <h3 id="splashTitle">Welcome Back!</h3>
+      <p id="splashDesc">Track income, spending, budgets and goals in one calm dashboard — private by design.</p>
+    </div>
+  </div>
+</div>
+
+<p class="auth-page-footer"><a class="krixora-credit" href="https://krixora-portfolio.vercel.app/" target="_blank" rel="noopener noreferrer" title="KRIXORA portfolio">
+  <span class="krixora-credit__label">Built by</span>
+  <img src="assets/icons/krixora-mark.svg" width="18" height="18" alt="" />
+  <strong>KRIXORA</strong>
+</a></p>
+
+<script type="module">
+  import { login, signup, isAuthenticated, requestPasswordReset } from './js/state.js';
+
+  // Already logged in? Skip straight to the dashboard.
+  isAuthenticated().then((authed) => {
+    if (authed) window.location.href = 'index.html';
+  });
+
+  const slider = document.getElementById('panelSlider');
+  const splashTitle = document.getElementById('splashTitle');
+  const splashDesc = document.getElementById('splashDesc');
+  const glowSnake = document.getElementById('glowSnake');
+
+  const COPY = {
+    login: { title: 'Welcome Back!', desc: 'Track income, spending, budgets and goals in one calm dashboard — private by design.' },
+    signup: { title: 'Join Cashora!', desc: 'Create your account and start tracking your money in minutes — free, no credit card.' },
+  };
+
+  function slideTo(view) {
+    slider.style.transform = view === 'signup' ? 'translateX(-50%)' : 'translateX(0%)';
+    splashTitle.textContent = COPY[view].title;
+    splashDesc.textContent = COPY[view].desc;
+  }
+  document.getElementById('goToSignup').addEventListener('click', () => slideTo('signup'));
+  document.getElementById('goToLogin').addEventListener('click', () => slideTo('login'));
+
+  // ---------- Password visibility toggles ----------
+  document.querySelectorAll('.eye-toggle').forEach((eye) => {
+    eye.addEventListener('click', () => {
+      const input = document.getElementById(eye.dataset.target);
+      const openPaths = eye.querySelectorAll('.eye-open');
+      const closeLine = eye.querySelector('.eye-close');
+      const showing = input.type === 'text';
+      input.type = showing ? 'password' : 'text';
+      openPaths.forEach((p) => (p.style.display = showing ? 'block' : 'none'));
+      closeLine.style.display = showing ? 'none' : 'block';
+      eye.setAttribute('aria-pressed', String(!showing));
+      eye.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+    });
+  });
+
+  // ---------- Kinetic typing particles (cosmetic only) ----------
+  const charCache = {};
+  function measureWidth(text, font) {
+    const canvas = measureWidth.canvas || (measureWidth.canvas = document.createElement('canvas'));
+    const ctx = canvas.getContext('2d');
+    ctx.font = font;
+    return ctx.measureText(text).width;
+  }
+  function runParticle(e) {
+    const el = e.target;
+    const parent = el.parentElement;
+    if (charCache[el.id] === undefined) charCache[el.id] = '';
+    const val = el.value;
+    const prev = charCache[el.id];
+    const paddingX = 50;
+    const font = "14px 'Inter', -apple-system, sans-serif";
+
+    if (val.length < prev.length) {
+      const deleted = prev.slice(-1) || '*';
+      const shown = el.type === 'password' ? '•' : deleted;
+      const w = measureWidth(prev.slice(0, -1), font);
+      const jumper = document.createElement('div');
+      jumper.className = 'smooth-jump';
+      jumper.textContent = shown;
+      jumper.style.left = paddingX + w + 'px';
+      jumper.style.top = '17px';
+      parent.appendChild(jumper);
+      setTimeout(() => jumper.remove(), 350);
+    } else if (val.length > prev.length) {
+      const added = val.slice(-1);
+      const shown = el.type === 'password' ? '•' : added;
+      const w = measureWidth(val.slice(0, -1), font);
+      const ball = document.createElement('div');
+      ball.className = 'smooth-ball';
+      ball.textContent = shown;
+      ball.style.left = paddingX + w + 'px';
+      ball.style.top = '17px';
+      parent.appendChild(ball);
+      setTimeout(() => ball.remove(), 250);
+    }
+    charCache[el.id] = val;
+  }
+  ['loginEmail', 'loginPass', 'regName', 'regEmail', 'regPass'].forEach((id) => {
+    document.getElementById(id)?.addEventListener('input', runParticle);
+  });
+
+  // ---------- Inline message helper ----------
+  function showMsg(el, text, type) {
+    el.textContent = text;
+    el.className = 'auth-inline-msg is-visible ' + (type === 'error' ? 'is-error' : 'is-success');
+  }
+  function hideMsg(el) {
+    el.classList.remove('is-visible', 'is-error', 'is-success');
+  }
+
+  // ---------- Login pane: also doubles as "forgot password" ----------
+  const loginTitle = document.getElementById('loginTitle');
+  const loginSubtitle = document.getElementById('loginSubtitle');
+  const loginPassPod = document.getElementById('loginPassPod');
+  const forgotBtn = document.getElementById('forgotBtn');
+  const loginSubmitBtn = document.getElementById('loginSubmitBtn');
+  const loginMsg = document.getElementById('loginMsg');
+  const loginEmail = document.getElementById('loginEmail');
+  const loginPass = document.getElementById('loginPass');
+
+  let resetMode = false;
+  function setResetMode(on) {
+    resetMode = on;
+    hideMsg(loginMsg);
+    if (on) {
+      loginTitle.textContent = 'Reset your password';
+      loginSubtitle.textContent = "Enter your email and we'll send you a reset link.";
+      loginPassPod.style.display = 'none';
+      forgotBtn.textContent = '\u2190 Back to sign in';
+      loginSubmitBtn.textContent = 'SEND RESET LINK';
+    } else {
+      loginTitle.textContent = 'Welcome back';
+      loginSubtitle.textContent = 'Sign in to see your financial overview.';
+      loginPassPod.style.display = 'block';
+      forgotBtn.textContent = 'Forgot password?';
+      loginSubmitBtn.textContent = 'SIGN IN';
+    }
+  }
+  forgotBtn.addEventListener('click', () => setResetMode(!resetMode));
+
+  document.getElementById('loginForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMsg(loginMsg);
+    const email = loginEmail.value.trim();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMsg(loginMsg, 'Please enter a valid email address.', 'error');
+      return;
+    }
+
+    if (resetMode) {
+      loginSubmitBtn.disabled = true;
+      loginSubmitBtn.textContent = 'Sending…';
+      try {
+        await requestPasswordReset(email);
+        showMsg(loginMsg, 'Reset link sent. Check your inbox (and spam folder).', 'success');
+      } catch (err) {
+        showMsg(loginMsg, err.message || 'Could not send reset link. Please try again.', 'error');
+      } finally {
+        loginSubmitBtn.disabled = false;
+        loginSubmitBtn.textContent = 'SEND RESET LINK';
+      }
+      return;
+    }
+
+    if (!loginPass.value) {
+      showMsg(loginMsg, 'Please enter your password.', 'error');
+      return;
+    }
+
+    loginSubmitBtn.disabled = true;
+    loginSubmitBtn.textContent = 'Signing in…';
+    glowSnake.classList.add('active');
+    try {
+      await login(email, loginPass.value);
+      window.location.href = 'index.html';
+    } catch (err) {
+      glowSnake.classList.remove('active');
+      showMsg(loginMsg, err.message || 'Something went wrong. Please try again.', 'error');
+      loginSubmitBtn.disabled = false;
+      loginSubmitBtn.textContent = 'SIGN IN';
+    }
+  });
+
+  // ---------- Signup pane ----------
+  const signupMsg = document.getElementById('signupMsg');
+  const signupSubmitBtn = document.getElementById('signupSubmitBtn');
+
+  document.getElementById('signupForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    hideMsg(signupMsg);
+    const name = document.getElementById('regName').value.trim();
+    const email = document.getElementById('regEmail').value.trim();
+    const password = document.getElementById('regPass').value;
+
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMsg(signupMsg, 'Please enter a valid email address.', 'error');
+      return;
+    }
+    if (!name) {
+      showMsg(signupMsg, 'Please enter your name.', 'error');
+      return;
+    }
+    if (password.length < 8) {
+      showMsg(signupMsg, 'Password must be at least 8 characters.', 'error');
+      return;
+    }
+
+    signupSubmitBtn.disabled = true;
+    signupSubmitBtn.textContent = 'Creating account…';
+    glowSnake.classList.add('active');
+    try {
+      await signup(name, email, password);
+      window.location.href = 'index.html';
+    } catch (err) {
+      glowSnake.classList.remove('active');
+      showMsg(signupMsg, err.message || 'Something went wrong. Please try again.', 'error');
+      signupSubmitBtn.disabled = false;
+      signupSubmitBtn.textContent = 'SIGN UP';
+    }
+  });
+</script>
+
+</body>
+</html>
